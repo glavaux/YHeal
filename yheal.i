@@ -1,3 +1,14 @@
+/*
+ * This is the yorick plugin for Healpix.
+ *
+ * Copyright(c) 2009, Guilhem Lavaux.
+ * All rights reserved.
+ *
+ * http://www.iap.fr/users/lavaux/yheal.php
+ * 
+ * Read the accompanying LICENSE file for details.
+ */
+
 plug_in,"yheal";
 
 HEALPIX_FLOAT = 0;
