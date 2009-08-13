@@ -5,6 +5,9 @@ Y_EXE_PKGS=
 Y_EXE_HOME=/usr/lib/yorick
 Y_EXE_SITE=/usr/lib/yorick
 
+# Update this to the actual configuration you used to build Healpix 
+HEALPIX_BUILD=generic_gcc
+
 # ----------------------------------------------------- optimization flags
 
 # options for make command line, e.g.-   make COPT=-g TGT=exe
@@ -24,8 +27,9 @@ PKG_EXENAME=yorick
 # PKG_DEPLIBS=-Lsomedir -lsomelib   for dependencies of this package
 PKG_DEPLIBS=-lhealpix_cxx -lcxxsupport -lcfitsio -lfftpack
 # set compiler (or rarely loader) flags specific to this package
-PKG_CFLAGS=-fopenmp -I$(HEALPIX)/src/cxx/generic_gcc/include
-PKG_LDFLAGS=-fopenmp -L$(HEALPIX)/src/cxx/generic_gcc/lib
+HEALPIX_CXX=$(HEALPIX)/src/cxx/$(HEALPIX_BUILD)
+PKG_CFLAGS=-I$(HEALPIX_CXX)/include -fopenmp
+PKG_LDFLAGS=-L$(HEALPIX_CXX)/lib -fopenmp
 
 # list of additional package names you want in PKG_EXENAME
 # (typically Y_EXE_PKGS should be first here)
