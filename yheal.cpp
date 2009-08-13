@@ -76,7 +76,6 @@ void Y_healpix_map_init(int argc)
   YorickHealpix *px = ypush_healpix();
 
   int nside = ygets_i(POS_NSIDE);
-  cout << "   Nside = " << nside << " type = " << ygets_i(POS_TYPE) << endl;
   switch (ygets_i(POS_TYPE))
     {
     case HEALPIX_FLOAT:      
@@ -204,16 +203,11 @@ template<typename T>
 static void doInterpolation(Healpix_Map<T> *hmap, double *latitudes, double *longitudes,
 		     int num, T *result)
 {
-  cout << "Interpolate in " << num << " directions" << endl;
-  cout << latitudes << endl;
-  cout << longitudes << endl;
-  cout << result << endl;
   for (int i = 0; i < num; i++)
     {
       pointing p(latitudes[i], longitudes[i]);
       result[i] = hmap->interpolated_value(p);
     }
-  cout << "Finished" << endl;
 }
 
 extern "C"
@@ -224,7 +218,6 @@ void Y_healpix_map_get_direction(int iarg)
       y_error("healpix_map_get_direction cannot be invoked as a subroutine");
       return;
     }
-
 
   if (iarg != 3)
     {
@@ -238,10 +231,6 @@ void Y_healpix_map_get_direction(int iarg)
 
   int rank_lat = yarg_rank(1);
   int rank_long = yarg_rank(0);
-
-  cout << "px=" << px << endl;
-  cout << "px->generic=" << px->generic << endl;
-  cout << "Ranks = " << rank_lat << " " << rank_long << endl;
 
   long *lat_dims;
   long *long_dims;
@@ -261,15 +250,6 @@ void Y_healpix_map_get_direction(int iarg)
   if (yarg_dims(2, long_dims, lat_dims) < 0)
     y_error("Argument 3 and 2 must be conformable");
 
-  cout << "Dims=[";
-  for (int i = 1; i < long_dims[0]; i++)
-    cout << long_dims[i] << ",";
-  cout << endl;
-  cout << "Dims=[";
-  for (int i = 1; i < long_dims[0]; i++)
-    cout << lat_dims[i] << ",";
-  cout << endl;
-
   double *latitudes = ygeta_d(3, &ntot_lat, 0);
   double *longitudes = ygeta_d(2, &ntot_long, 0);
 
@@ -278,7 +258,6 @@ void Y_healpix_map_get_direction(int iarg)
   if (lat_dims[0] == 0)
     lat_dims = 0;
 
-  cout << "Do the interpolation" << endl;
   switch (px->type) {
   case Y_FLOAT:
     {
@@ -317,7 +296,7 @@ static void putDataInHealpix(Healpix_Map<T>& hmap, double *longit, double *latid
 extern "C"
 void Y_healpix_map_put_direction(int iarg)
 {
-  if (yarg_subroutine())
+  if (!yarg_subroutine())
     {
       y_error("healpix_map_put_direction is a a subroutine");
       return;
