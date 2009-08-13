@@ -94,13 +94,16 @@ extern healpix_alm_get_alms;
 /* DOCUMENT healpix_alm_get_alms(alm)
      returns a complex array of the alms contained the "alm" object. This
      array is a copy of the internal data. Any modifications to "alm" must
-     be done using healpix_alm_put_alms.
+     be done using healpix_alm_put_alms. The ordering follows healpix alm
+     ordering.
      
    SEE ALSO: healpix_alm_init, healpix_alm_put_alms
  */
 
 extern healpix_alm_put_alms;
-/* DOCUMENT healpix_alm_put_alms, alm, 
+/* DOCUMENT healpix_alm_put_alms, alm, array
+     This sets the internal alm of the given "alm" object to the value
+     sets in "array". The ordering of the array must follow healpix ordering.
      
-   SEE ALSO:
+   SEE ALSO: healpix_alm_init, healpix_alm_get_alms
  */
