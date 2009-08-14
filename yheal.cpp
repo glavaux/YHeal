@@ -126,12 +126,28 @@ void Y_healpix_map_load(int argc)
     case HEALPIX_FLOAT:
       px->type = Y_FLOAT;
       px->map_float = new Healpix_Map<float>();
-      read_Healpix_map_from_fits(std::string(fname), *px->map_float);
+      try
+	{
+	  read_Healpix_map_from_fits(std::string(fname), *px->map_float);
+	}
+      catch (const Message_error& e)
+	{
+	  y_error("Invalid FITS file");
+	  return;
+	}
       break;
     case HEALPIX_DOUBLE:
       px->type = Y_DOUBLE;
       px->map_double = new Healpix_Map<double>();
-      read_Healpix_map_from_fits(std::string(fname), *px->map_double);
+      try
+	{
+	  read_Healpix_map_from_fits(std::string(fname), *px->map_double);
+	}
+      catch (const Message_error& e)
+	{
+	  y_error("Invalid FITS file");
+	  return;
+	}
       break;
     };
  
@@ -201,17 +217,29 @@ void Y_healpix_map_get_map(int iarg)
 
 template<typename T>
 static void doInterpolation(Healpix_Map<T> *hmap, double *latitudes, double *longitudes,
-		     int num, T *result)
+			    int num, T *result, bool needInterpolation)
 {
-  for (int i = 0; i < num; i++)
+  if (needInterpolation)
     {
-      pointing p(latitudes[i], longitudes[i]);
-      result[i] = hmap->interpolated_value(p);
+      for (int i = 0; i < num; i++)
+	{
+	  pointing p(latitudes[i], longitudes[i]);      
+	  result[i] = hmap->interpolated_value(p);
+	}
+    }
+  else
+    {
+      for (int i = 0; i < num; i++)
+	{
+	  pointing p(latitudes[i], longitudes[i]);      
+	  result[i] = (*hmap)[ hmap->ang2pix(p) ];
+	}
+      
     }
 }
 
 extern "C"
-void Y_healpix_map_get_direction(int iarg)
+void Y_healpix_map_get_direction_internal(int iarg)
 {
   if (yarg_subroutine())
     {
@@ -219,39 +247,33 @@ void Y_healpix_map_get_direction(int iarg)
       return;
     }
 
-  if (iarg != 3)
+  if (iarg < 4)
     {
       y_error("healpix_map_get_direction needs three arguments");
     }
+  
+  bool needInterpolation = (ygets_i(0) != 0);
 
-  YorickHealpix *px = yget_healpix(2);
+  YorickHealpix *px = yget_healpix(3);
   long ntot_lat;
   long ntot_long;
 
-
-  int rank_lat = yarg_rank(1);
-  int rank_long = yarg_rank(0);
+  int rank_lat = yarg_rank(2);
+  int rank_long = yarg_rank(1);
 
   long *lat_dims;
   long *long_dims;
 
-  {
-    long tmp_dims[] = { 1, rank_lat+1 };
-    lat_dims = ypush_l(tmp_dims);
-  }
-
-  {
-    long tmp_dims[] = { 1, rank_long+1 };
-    long_dims = ypush_l(tmp_dims);
-  }
+  lat_dims = (long *)alloca(sizeof(long)*(rank_lat+1));
+  long_dims = (long *)alloca(sizeof(long)*(rank_long+1));
 
   // Arguments have been displaced by 2
-  yarg_dims(3, lat_dims, 0);
-  if (yarg_dims(2, long_dims, lat_dims) < 0)
+  yarg_dims(2, lat_dims, 0);
+  if (yarg_dims(1, long_dims, lat_dims) < 0)
     y_error("Argument 3 and 2 must be conformable");
 
-  double *latitudes = ygeta_d(3, &ntot_lat, 0);
-  double *longitudes = ygeta_d(2, &ntot_long, 0);
+  double *latitudes = ygeta_d(2, &ntot_lat, 0);
+  double *longitudes = ygeta_d(1, &ntot_long, 0);
 
   if (long_dims[0] == 0)
     long_dims = 0;
@@ -262,13 +284,13 @@ void Y_healpix_map_get_direction(int iarg)
   case Y_FLOAT:
     {
       float *result = ypush_f(lat_dims);
-      doInterpolation(px->map_float, latitudes, longitudes, ntot_lat, result);
+      doInterpolation(px->map_float, latitudes, longitudes, ntot_lat, result, needInterpolation);
       break;
     }
   case Y_DOUBLE:
     {
       double *result = ypush_d(lat_dims);
-      doInterpolation(px->map_double, latitudes, longitudes, ntot_lat, result);
+      doInterpolation(px->map_double, latitudes, longitudes, ntot_lat, result, needInterpolation);
       break;
     }
   default:

@@ -52,7 +52,10 @@ extern healpix_map_get_map;
              healpix_map_get_direction, healpix_map_put_direction
  */
 
-extern healpix_map_get_direction;
+extern healpix_map_get_direction_internal;
+
+func healpix_map_get_direction(map, latitudes, longitudes, interp=)
+{
 /* DOCUMENT healpix_map_get_direction(map, latitudes, longitudes)
      returns an array of the interpolated value of the healpix map at the given
      longitudes/latitudes. Longitudes and latitudes must be conformable.
@@ -62,6 +65,11 @@ extern healpix_map_get_direction;
    SEE ALSO: healpix_map_init, healpix_map_load, healpix_map_get_pixel,
              healpix_map_get_map, healpix_map_put_direction
  */
+  if (is_void(interp))
+    interp=1;
+  
+  return healpix_map_get_direction_internal(map, latitudes, longitudes, interp);
+}
 
 extern healpix_map_put_direction;
 /* DOCUMENT healpix_map_put_direction, map, data, latitudes, longitudes
@@ -101,15 +109,36 @@ extern healpix_alm_alm2map;
              healpix_alm_put_alms
  */
 
-extern healpix_alm_get_alms;
-/* DOCUMENT healpix_alm_get_alms(alm)
+extern healpix_alm_get_alms1;
+extern healpix_alm_get_alms2;
+
+func healpix_alm_get_alms(alm,llist,mlist)
+{
+/* DOCUMENT healpix_alm_get_alms(alm[,llist,mlist])
      returns a complex array of the alms contained the "alm" object. This
      array is a copy of the internal data. Any modifications to "alm" must
      be done using healpix_alm_put_alms. The ordering follows healpix alm
      ordering.
+     Optionally, one may give a list of Ls and Ms in  llist and mlist.
+     In that case the returned array will contain the alms ordered in
+     exactly the list specify it, with the same dimensions. llist and mlist
+     must have the same dimensions.
      
    SEE ALSO: healpix_alm_init, healpix_alm_put_alms
  */
+  if (llist == [] && mlist == [])
+    return healpix_alm_get_alms1(alm);
+
+  if (dimsof(llist)(1) != dimsof(mlist)(1))
+    error,"Rank does not match for (l,m)s";
+
+  if (allof(dimsof(llist) != dimsof(mlist)))
+    error,"Dimensions of the (l,m)s must be the same";
+
+  if (anyof(llist < mlist) || anyof(-llist > mlist))
+    error,"-l <= m <= l for all elements of llist and mlist";
+  return healpix_alm_get_alms2(alm,llist,mlist);
+}
 
 extern healpix_alm_put_alms;
 /* DOCUMENT healpix_alm_put_alms, alm, array
@@ -117,4 +146,12 @@ extern healpix_alm_put_alms;
      sets in "array". The ordering of the array must follow healpix ordering.
      
    SEE ALSO: healpix_alm_init, healpix_alm_get_alms
+ */
+
+extern healpix_alm_get_lmmax;
+/* DOCUMENT [lmax,mmax]=healpix_alm_get_lmmax(alm)
+      returns the number of spherical harmonics mode supported by this
+      this "alm" object.
+      
+   SEE ALSO: healpix_alm_init
  */
