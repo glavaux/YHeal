@@ -185,7 +185,7 @@ static void buildAlmArray(Alm<xcomplex<T> >& alms)
 }
 
 extern "C"
-void Y_healpix_alm_get_alms(int argc)
+void Y_healpix_alm_get_alms1(int argc)
 {
   if (argc != 1)
     {
@@ -194,6 +194,7 @@ void Y_healpix_alm_get_alms(int argc)
     }
 
   YorickAlm *alm = yget_alm(0);
+
   switch (alm->type)
     {
     case Y_FLOAT:
@@ -201,6 +202,58 @@ void Y_healpix_alm_get_alms(int argc)
       break;
     case Y_DOUBLE:
       buildAlmArray(*alm->alm_double);
+      break;
+    default:
+      y_error("internal error");
+      break;
+    }
+  
+}
+
+template<typename T>
+static void buildAlmWithList(Alm<xcomplex<T> >& alms,
+			     int *llist, int *mlist, long ntot)
+{
+  long dims[] = { 1, ntot };
+  double *out = ypush_z(dims);
+
+  for (long i = 0; i < ntot; i++)
+    {
+      const xcomplex<T>& c = alms(llist[i], mlist[i]);
+      out[2*i + 0] = c.re;
+      out[2*i + 1] = c.im;
+    }
+}
+
+
+extern "C"
+void Y_healpix_alm_get_alms2(int argc)
+{
+  if (argc != 3)
+    {
+      y_error("wrong number of arguments");
+      return;
+    }
+
+  YorickAlm *alm = yget_alm(2);
+  long ntotl, ntotm;
+
+  int *llist = ygeta_i(1, &ntotl, 0);
+  int *mlist = ygeta_i(0, &ntotm, 0);
+
+  if (ntotl != ntotm)
+    {
+      y_error("Internal error: argument 2 and 3 should have the same number of elements");
+      return;
+    }
+
+  switch (alm->type)
+    {
+    case Y_FLOAT:
+      buildAlmWithList(*alm->alm_float, llist, mlist, ntotl);
+      break;
+    case Y_DOUBLE:
+      buildAlmWithList(*alm->alm_double, llist, mlist, ntotl);
       break;
     default:
       y_error("internal error");
@@ -267,3 +320,27 @@ void Y_healpix_alm_put_alms(int argc)
   ypush_nil();
 }
 
+extern "C"
+void Y_healpix_alm_get_lmmax(int argc)
+{
+  if (argc != 1)
+    {
+      y_error("wrong number of arguments");
+      return;
+    }
+
+  YorickAlm *alm = yget_alm(1);
+  long dims[2] = { 1, 2 };
+  int *a = ypush_i(dims);
+  switch (alm->type)
+    {
+    case Y_FLOAT:
+      a[0] = alm->alm_float->Lmax();
+      a[1] = alm->alm_float->Mmax();
+      break;
+    case Y_DOUBLE:
+      a[0] = alm->alm_double->Lmax();
+      a[1] = alm->alm_double->Mmax();
+      break;
+    }  
+}
