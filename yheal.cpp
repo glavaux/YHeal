@@ -12,6 +12,8 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <string>
+#include <fitshandle.h>
 #include <healpix_map.h>
 #include <healpix_map_fitsio.h>
 #define typeid ctypeid
@@ -145,6 +147,64 @@ void Y_healpix_map_load(int argc)
   return;
 }
 
+
+/*
+ * Object storage
+ */
+
+template<typename T,typename T2>
+void reallyStoreMap(const string& fname, Healpix_Map<T2>* map)
+{
+  fitshandle f;
+
+  try
+    {
+      f.create(fname);
+    }
+  catch (const Message_error& e)
+    {
+      y_error("Could not create file (already present or disk full)");
+      return;
+    }
+  
+  write_Healpix_map_to_fits(f, *map, FITSUTIL<T>::DTYPE);
+}
+
+template<typename T>
+void storeHealpixMap(const string& fname, Healpix_Map<T>* map, int type)
+{
+  switch (type)
+    {
+    case HEALPIX_FLOAT:
+      reallyStoreMap<float,T>(fname, map);
+      break;
+    case HEALPIX_DOUBLE:
+      reallyStoreMap<double,T>(fname, map);
+      break;
+    }
+}
+
+extern "C"
+void Y_healpix_map_save(int iarg)
+{
+   y_check_arguments(iarg, 3); 
+ 
+   ystring_t fname = ygets_q(iarg-1);
+   int type = ygets_i(iarg-2);
+   YorickHealpix *map = yget_healpix(iarg-3);
+  
+   switch (map->type)
+     {
+     case Y_FLOAT:
+       storeHealpixMap(string(fname), map->map_float, type);
+       break;
+     case Y_DOUBLE:
+       storeHealpixMap(string(fname), map->map_double, type);
+       break;
+     }
+
+}
+
 /*
  * Object accessor
  */
@@ -196,6 +256,42 @@ void Y_healpix_map_get_map(int iarg)
     }
   }
 }
+
+template<typename T>
+void putMap(Healpix_Map<T> *map, T *data, long ntot)
+{
+  if (map->Npix() != ntot)
+    y_error("Invalid number of elements in the input array");
+
+  memcpy(&(*map)[0], data, sizeof(T)*ntot);
+}
+
+
+extern "C"
+void Y_healpix_map_put_map(int iarg)
+{
+  long ntot;
+
+  y_check_arguments(iarg, 2);
+
+
+  YorickHealpix *px = yget_healpix(iarg-1);
+  switch (px->type) {
+  case Y_FLOAT:
+    {
+      float *full_map = ygeta_f(iarg-2, &ntot, 0);
+      putMap(px->map_float, full_map, ntot);
+      break;
+    }
+  case Y_DOUBLE:
+    {
+      double *full_map = ygeta_d(iarg-2, &ntot, 0);
+      putMap(px->map_double, full_map, ntot);
+      break;
+    }
+  }
+}
+
 
 template<typename T>
 static void doInterpolation(Healpix_Map<T> *hmap, double *latitudes, double *longitudes,
