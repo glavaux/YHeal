@@ -73,4 +73,13 @@ static YorickAlm *yget_alm(int iarg)
   return (YorickAlm *)yget_obj(iarg, &healpix_alm_obj);
 }
 
+
+static void y_check_arguments(int argc, int expected)
+{
+  if (argc != expected)
+    {
+      y_error("wrong number of arguments");
+    }
+}
+
 #endif
