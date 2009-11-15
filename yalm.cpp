@@ -14,6 +14,7 @@
 #include <healpix_map.h>
 #include <healpix_map_fitsio.h>
 #include <alm.h>
+#include <alm_fitsio.h>
 #include <alm_healpix_tools.h>
 #include <xcomplex.h>
 #define typeid ctypeid
@@ -61,6 +62,7 @@ void Y_healpix_alm_init(int argc)
   if (argc != 3 && argc != 2)
     {
       y_error("healpix_map_init takes (two) three arguments: lmax (mmax) and type");
+      return;
     }
 
   YorickAlm *alm = ypush_alm();
@@ -68,14 +70,14 @@ void Y_healpix_alm_init(int argc)
   int lmax, mmax, type;
   if (argc == 2)
     {
-      mmax = lmax = ygets_i(2);
-      type = ygets_i(1);
+      mmax = lmax = ygets_i(argc);
+      type = ygets_i(argc-1);
     }
   else
     {
-      lmax = ygets_i(3);
-      mmax = ygets_i(2);
-      type = ygets_i(1);
+      lmax = ygets_i(argc);
+      mmax = ygets_i(argc-1);
+      type = ygets_i(argc-2);
     }
 
   switch (type)
@@ -96,6 +98,52 @@ void Y_healpix_alm_init(int argc)
 
 }
 
+template<typename T>
+Alm<xcomplex<T> > *loadAlm(const std::string& fname)
+{
+  Alm<xcomplex<T> > *alms;
+  int lmax, mmax;
+
+  try {
+    get_almsize(fname, lmax, mmax);
+
+    alms = new Alm<xcomplex<T> >(lmax, mmax);
+
+    read_Alm_from_fits(fname, *alms, lmax, mmax);
+  } catch (const Message_error& e) {
+    y_error("unable to open file");
+    return 0;
+  }
+
+  return alms;
+  
+}
+
+extern "C"
+void Y_healpix_alm_load(int argc)
+{
+  y_check_arguments(argc, 2);
+
+  YorickAlm *alm = ypush_alm();
+  int type = ygets_i(argc);
+  ystring_t s = ygets_q(argc-1);
+
+  switch (type) {
+  case HEALPIX_FLOAT:   
+    alm->type = Y_FLOAT;
+    alm->alm_float = loadAlm<float>(std::string(s));
+    break;
+  case HEALPIX_DOUBLE:
+    alm->type = Y_DOUBLE;
+    alm->alm_double = loadAlm<double>(std::string(s));
+    break;
+  default:
+    y_error("Unsuported healpix type");
+    return;
+    break;
+  }
+}
+
 
 template<typename T>
 static void doTransform1(Healpix_Map<T>& m, Alm<xcomplex<T> >& alm)
@@ -109,14 +157,10 @@ static void doTransform1(Healpix_Map<T>& m, Alm<xcomplex<T> >& alm)
 extern "C"
 void Y_healpix_alm_map2alm(int argc)
 {
-  if (argc != 2)
-    {
-      y_error("wrong number of arguments");
-      return;
-    }
+  y_check_arguments(argc, 2);
 
-  YorickAlm *alm = yget_alm(1);
-  YorickHealpix *px = yget_healpix(0);
+  YorickAlm *alm = yget_alm(argc-1);
+  YorickHealpix *px = yget_healpix(argc-2);
 
   if (alm->type != px->type)
     y_error("Alm type is not compatible with Map type");
@@ -145,14 +189,10 @@ static void doTransform2(Healpix_Map<T>& m, Alm<xcomplex<T> >& alm)
 extern "C"
 void Y_healpix_alm_alm2map(int argc)
 {
-  if (argc != 2)
-    {
-      y_error("wrong number of arguments");
-      return;
-    }
+  y_check_arguments(argc, 2);
 
-  YorickAlm *alm = yget_alm(1);
-  YorickHealpix *px = yget_healpix(0);
+  YorickAlm *alm = yget_alm(argc-1);
+  YorickHealpix *px = yget_healpix(argc-2);
 
   if (alm->type != px->type)
     y_error("Alm type is not compatible with Map type");
@@ -187,13 +227,9 @@ static void buildAlmArray(Alm<xcomplex<T> >& alms)
 extern "C"
 void Y_healpix_alm_get_alms1(int argc)
 {
-  if (argc != 1)
-    {
-      y_error("wrong number of arguments");
-      return;
-    }
+  y_check_arguments(argc, 1);
 
-  YorickAlm *alm = yget_alm(0);
+  YorickAlm *alm = yget_alm(argc-1);
 
   switch (alm->type)
     {
@@ -229,17 +265,13 @@ static void buildAlmWithList(Alm<xcomplex<T> >& alms,
 extern "C"
 void Y_healpix_alm_get_alms2(int argc)
 {
-  if (argc != 3)
-    {
-      y_error("wrong number of arguments");
-      return;
-    }
+  y_check_arguments(argc, 3);
 
-  YorickAlm *alm = yget_alm(2);
+  YorickAlm *alm = yget_alm(argc-1);
   long ntotl, ntotm;
 
-  int *llist = ygeta_i(1, &ntotl, 0);
-  int *mlist = ygeta_i(0, &ntotm, 0);
+  int *llist = ygeta_i(argc-2, &ntotl, 0);
+  int *mlist = ygeta_i(argc-3, &ntotm, 0);
 
   if (ntotl != ntotm)
     {
@@ -286,14 +318,10 @@ static void loadAlmArray(Alm<xcomplex<T> >& alms, double *in, long ntot)
 extern "C"
 void Y_healpix_alm_put_alms(int argc)
 {
-  if (argc != 2)
-    {
-      y_error("wrong number of arguments");
-      return;
-    }
+  y_check_arguments(argc, 2);
 
-  YorickAlm *alm = yget_alm(1);
-  int rank_in = yarg_rank(0);
+  YorickAlm *alm = yget_alm(argc-1);
+  int rank_in = yarg_rank(argc-2);
   if (rank_in != 1)
     {
       y_error("wrong dimension for argument 2");
@@ -302,7 +330,7 @@ void Y_healpix_alm_put_alms(int argc)
 
   long dims[2];
   long ntot;
-  double *in_alm = ygeta_z(0, &ntot, dims);
+  double *in_alm = ygeta_z(argc-2, &ntot, dims);
 
   switch (alm->type)
     {
@@ -323,13 +351,9 @@ void Y_healpix_alm_put_alms(int argc)
 extern "C"
 void Y_healpix_alm_get_lmmax(int argc)
 {
-  if (argc != 1)
-    {
-      y_error("wrong number of arguments");
-      return;
-    }
+  y_check_arguments(argc, 1);
 
-  YorickAlm *alm = yget_alm(1);
+  YorickAlm *alm = yget_alm(argc-1);
   long dims[2] = { 1, 2 };
   int *a = ypush_i(dims);
   switch (alm->type)
@@ -343,4 +367,49 @@ void Y_healpix_alm_get_lmmax(int argc)
       a[1] = alm->alm_double->Mmax();
       break;
     }  
+}
+
+template<typename T>
+void scaleALM(Alm<xcomplex<T> >& alm, double *scaling, long ntot)
+{
+  if (ntot < alm.Lmax())
+    y_error("Insufficient scaling data");
+
+  long mmax = alm.Mmax(), lmax = alm.Lmax();
+
+  for (int m=0; m<=mmax; ++m)
+    for (int l=m; l<=lmax; ++l)
+      alm(l,m) *= scaling[l];
+}
+
+extern "C"
+void Y_healpix_alm_scaleL(int argc)
+{
+  y_check_arguments(argc, 2);
+
+  YorickAlm *alm = yget_alm(argc-1);
+  int rank_in = yarg_rank(argc-2);
+  if (rank_in != 1)
+    {
+      y_error("wrong dimension for argument 2");
+      return;
+    }
+
+  long dims[2];
+  long ntot;
+  double *in_scaling = ygeta_z(argc-2, &ntot, dims);
+
+  switch (alm->type) {
+  case Y_FLOAT:
+    scaleALM(*alm->alm_float, in_scaling, ntot);
+    break;
+  case Y_DOUBLE:
+    scaleALM(*alm->alm_double, in_scaling, ntot);
+    break;
+  default:
+    y_error("internal error");
+    break;
+  }
+
+  
 }
