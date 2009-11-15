@@ -25,9 +25,6 @@ using namespace std;
  * Object constructor 1
  */
 
-#define POS_TYPE 1
-#define POS_NSIDE 2
-
 static void free_Yorick_healpix(void *a);
 
 y_userobj_t healpix_obj = {
@@ -68,23 +65,25 @@ void Y_healpix_map_init(int argc)
       y_error("healpix_map_init cannot be invoked as a subroutine");
     }
   
-  if (argc != 2)
-    {
-      y_error("healpix_map_init takes exactly two arguments: Nside and type");
-    }
+  y_check_arguments(argc, 2);
 
   YorickHealpix *px = ypush_healpix();
-
-  int nside = ygets_i(POS_NSIDE);
-  switch (ygets_i(POS_TYPE))
+  argc++;
+  
+  int nside = ygets_i(argc-1);
+  switch (ygets_i(argc-2))
     {
     case HEALPIX_FLOAT:      
       px->type = Y_FLOAT;
       px->map_float = new Healpix_Map<float>(nside, RING, SET_NSIDE);
+      for (long i = 0; i < px->map_float->Npix(); i++)
+        (*px->map_float)[i] = 0;
       break;
     case HEALPIX_DOUBLE:
       px->type = Y_DOUBLE;
       px->map_double = new Healpix_Map<double>(nside, RING, SET_NSIDE);
+      for (long i = 0; i < px->map_double->Npix(); i++)
+        (*px->map_double)[i] = 0;
       break;
     default:
       y_error("Unsupported healpix map type");
@@ -93,15 +92,9 @@ void Y_healpix_map_init(int argc)
   return;
 }
 
-#undef POS_TYPE
-#undef POS_NSIDE
-
 /*
  * Object constructor from file
  */
-
-#define POS_FNAME 2
-#define POS_TYPE 1
 
 extern "C"
 void Y_healpix_map_load(int argc)
@@ -112,15 +105,13 @@ void Y_healpix_map_load(int argc)
       return;
     }
 
-  if (argc != 2)
-    {
-      y_error("healpix_map_load: only two arguments");
-      return;
-    }
+  y_check_arguments(argc, 2);
 
   YorickHealpix *px = ypush_healpix();
-  ystring_t fname = ygets_q(POS_FNAME);
-  int type = ygets_i(POS_TYPE);
+  argc++;
+
+  ystring_t fname = ygets_q(argc-1);
+  int type = ygets_i(argc-2);
   switch (type) 
     {
     case HEALPIX_FLOAT:
@@ -154,9 +145,6 @@ void Y_healpix_map_load(int argc)
   return;
 }
 
-#undef POS_FNAME
-#undef POS_TYPE
-
 /*
  * Object accessor
  */
@@ -164,13 +152,10 @@ void Y_healpix_map_load(int argc)
 extern "C"
 void Y_healpix_map_get_pixel(int iarg)
 {
-  if (iarg != 2)
-    {
-      y_error("healpix_map_get_pixel needs two arguments");
-    }
+  y_check_arguments(iarg, 2);
 
-  YorickHealpix *px = yget_healpix(1);
-  int pixel = ygets_i(0);
+  YorickHealpix *px = yget_healpix(iarg-1);
+  int pixel = ygets_i(iarg-2);
 
   switch (px->type) {
   case Y_FLOAT:
@@ -191,12 +176,9 @@ void Y_healpix_map_get_pixel(int iarg)
 extern "C"
 void Y_healpix_map_get_map(int iarg)
 {
-  if (iarg != 1)
-    {
-      y_error("healpix_map_get_map needs one arguments");
-    }
+  y_check_arguments(iarg, 1);
 
-  YorickHealpix *px = yget_healpix(0);
+  YorickHealpix *px = yget_healpix(iarg-1);
   switch (px->type) {
   case Y_FLOAT:
     {
@@ -224,6 +206,7 @@ static void doInterpolation(Healpix_Map<T> *hmap, double *latitudes, double *lon
       for (int i = 0; i < num; i++)
 	{
 	  pointing p(latitudes[i], longitudes[i]);      
+          p.normalize();
 	  result[i] = hmap->interpolated_value(p);
 	}
     }
@@ -232,6 +215,7 @@ static void doInterpolation(Healpix_Map<T> *hmap, double *latitudes, double *lon
       for (int i = 0; i < num; i++)
 	{
 	  pointing p(latitudes[i], longitudes[i]);      
+          p.normalize();
 	  result[i] = (*hmap)[ hmap->ang2pix(p) ];
 	}
       
@@ -247,19 +231,16 @@ void Y_healpix_map_get_direction_internal(int iarg)
       return;
     }
 
-  if (iarg < 4)
-    {
-      y_error("healpix_map_get_direction needs three arguments");
-    }
+  y_check_arguments(iarg, 4);
   
-  bool needInterpolation = (ygets_i(0) != 0);
+  bool needInterpolation = (ygets_i(iarg-4) != 0);
 
-  YorickHealpix *px = yget_healpix(3);
+  YorickHealpix *px = yget_healpix(iarg-1);
   long ntot_lat;
   long ntot_long;
 
-  int rank_lat = yarg_rank(2);
-  int rank_long = yarg_rank(1);
+  int rank_lat = yarg_rank(iarg-2);
+  int rank_long = yarg_rank(iarg-3);
 
   long *lat_dims;
   long *long_dims;
@@ -268,12 +249,12 @@ void Y_healpix_map_get_direction_internal(int iarg)
   long_dims = (long *)alloca(sizeof(long)*(rank_long+1));
 
   // Arguments have been displaced by 2
-  yarg_dims(2, lat_dims, 0);
-  if (yarg_dims(1, long_dims, lat_dims) < 0)
+  yarg_dims(iarg-2, lat_dims, 0);
+  if (yarg_dims(iarg-3, long_dims, lat_dims) < 0)
     y_error("Argument 3 and 2 must be conformable");
 
-  double *latitudes = ygeta_d(2, &ntot_lat, 0);
-  double *longitudes = ygeta_d(1, &ntot_long, 0);
+  double *latitudes = ygeta_d(iarg-2, &ntot_lat, 0);
+  double *longitudes = ygeta_d(iarg-3, &ntot_long, 0);
 
   if (long_dims[0] == 0)
     long_dims = 0;
@@ -309,7 +290,9 @@ static void putDataInHealpix(Healpix_Map<T>& hmap, double *longit, double *latid
 {
   for (long i = 0; i < numData; i++)
     {
-      int pix = hmap.ang2pix(pointing(latid[i], longit[i]));
+      pointing p(latid[i], longit[i]);
+      p.normalize();
+      int pix = hmap.ang2pix(p);
 
       hmap[pix] += data[i];
     }
@@ -324,24 +307,21 @@ void Y_healpix_map_put_direction(int iarg)
       return;
     }
 
-  if (iarg != 4)
-    {
-      y_error("wrong number of arguments (must be 4)");
-      return;
-    }
+  y_check_arguments(iarg, 4);
   
-  YorickHealpix *px = yget_healpix(3);
+  YorickHealpix *px = yget_healpix(iarg-1);
   long ntot_lat;
   long ntot_long;
   long ntot_data;
 
-  int rank_lat = yarg_rank(1);
-  int rank_long = yarg_rank(0);
-  int rank_data = yarg_rank(2);
+  int rank_data = yarg_rank(iarg-2);
+  int rank_lat = yarg_rank(iarg-3);
+  int rank_long = yarg_rank(iarg-4);
   long *lat_dims;
   long *long_dims;
   long *data_dims;
 
+  cout << "Got ranks" << endl;
   {
     long tmp_dims[] = { 1, rank_lat+1 };
     lat_dims = ypush_l(tmp_dims);
@@ -356,25 +336,31 @@ void Y_healpix_map_put_direction(int iarg)
     long tmp_dims[] = { 1, rank_data+1 };
     data_dims = ypush_l(tmp_dims);
   }
+  iarg += 3;
 
   // Arguments have been displaced by 2
-  yarg_dims(4, lat_dims, 0);
-  if (yarg_dims(3, long_dims, lat_dims) < 0 || yarg_dims(5, data_dims, lat_dims) < 0)
+  yarg_dims(iarg-3, lat_dims, 0);
+  if (yarg_dims(iarg-4, long_dims, lat_dims) < 0 || 
+      yarg_dims(iarg-2, data_dims, lat_dims) < 0)
     y_error("Argument 2, 3 and 4 must be conformable");
+  cout << "Got dim" << endl;
 
-  double *latitudes = ygeta_d(4, &ntot_lat, 0);
-  double *longitudes = ygeta_d(3, &ntot_long, 0);
+  double *latitudes = ygeta_d(iarg-3, &ntot_lat, 0);
+  double *longitudes = ygeta_d(iarg-4, &ntot_long, 0);
   
+  cout << "Got arrays" << endl;
   switch (px->type) {
   case Y_FLOAT:
     {
-      float *dataf = ygeta_f(5, &ntot_data, 0);
+      float *dataf = ygeta_f(iarg-2, &ntot_data, 0);
+      cout << "Got f data" << endl;
       putDataInHealpix(*px->map_float, longitudes, latitudes, dataf, ntot_data);
       break;
     }
   case Y_DOUBLE:
     {
-      double *dataf = ygeta_d(5, &ntot_data, 0);
+      double *dataf = ygeta_d(iarg-2, &ntot_data, 0);
+      cout << "Got d data" << endl;
       putDataInHealpix(*px->map_double, longitudes, latitudes, dataf, ntot_data);
       break;
     }
