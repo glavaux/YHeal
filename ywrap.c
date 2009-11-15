@@ -5,8 +5,10 @@
 /*----------------begin yheal.i */
 extern BuiltIn Y_healpix_map_init;
 extern BuiltIn Y_healpix_map_load;
+extern BuiltIn Y_healpix_map_save;
 extern BuiltIn Y_healpix_map_get_pixel;
 extern BuiltIn Y_healpix_map_get_map;
+extern BuiltIn Y_healpix_map_put_map;
 extern BuiltIn Y_healpix_map_get_direction_internal;
 extern BuiltIn Y_healpix_map_put_direction;
 extern BuiltIn Y_healpix_alm_init;
@@ -32,8 +34,10 @@ static char *y0_includes[] = {
 static BuiltIn *y0_routines[] = {
   &Y_healpix_map_init,
   &Y_healpix_map_load,
+  &Y_healpix_map_save,
   &Y_healpix_map_get_pixel,
   &Y_healpix_map_get_map,
+  &Y_healpix_map_put_map,
   &Y_healpix_map_get_direction_internal,
   &Y_healpix_map_put_direction,
   &Y_healpix_alm_init,
@@ -55,8 +59,10 @@ static void *y0_values[] = {
 static char *y0_names[] = {
   "healpix_map_init",
   "healpix_map_load",
+  "healpix_map_save",
   "healpix_map_get_pixel",
   "healpix_map_get_map",
+  "healpix_map_put_map",
   "healpix_map_get_direction_internal",
   "healpix_map_put_direction",
   "healpix_alm_init",
