@@ -90,6 +90,15 @@ extern healpix_alm_init;
              healpix_alm_put_alms
  */
 
+extern healpix_alm_load;
+/* DOCUMENT healpix_alm_load(filename, type)
+     returns a newly built Alm object representation and loads the alms
+     values from the specified filename. The "type" is used to define
+     the in-memory representation (float or double precision).
+
+  SEE ALSO: healpix_alm_init
+ */
+
 extern healpix_alm_map2alm;
 /* DOCUMENT healpix_alm_map2alm, alm, map
      This subroutine does a spherical harmonic transform of the given "map"
@@ -155,3 +164,27 @@ extern healpix_alm_get_lmmax;
       
    SEE ALSO: healpix_alm_init
  */
+
+extern healpix_alm_scaleL;
+/* DOCUMENT healpix_alm_scaleL,alm,scalingL
+   scales the alm according the scalingL array. Each (l-1)-th entry of the entry must be
+   a number which serves as scaling homogeneously the a_{l,m} for all m such that -l <= m <= l.
+   scalingL must have the adequate size as given by healpix_alm_get_lmmax.
+   
+   SEE ALSO: healpix_alm_get_lmmax
+ */
+
+func healpix_smooth_with_Gaussian(alm, radius)
+{
+  sigma2fwhm=2.3548200450309493; // sqrt(8*log(2.))
+  degr2rad = pi/180;
+  
+  fct = (radius>=0) ? 1 : -1;
+  sigma = radius/60*degr2rad/sigma2fwhm;
+
+  lmax = healpix_alm_get_lmmax(alm)(1);
+  l = indgen(lmax+1)-1;
+  gb = exp(-0.5 * fct * l*(l+1)*sigma*sigma);
+
+  healpix_alm_scaleL,alm,gb;
+}
