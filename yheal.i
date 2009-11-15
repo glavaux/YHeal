@@ -34,6 +34,16 @@ extern healpix_map_load;
              healpix_map_get_direction, healpix_map_put_direction
  */
 
+extern healpix_map_save;
+/* DOCUMENT healpix_map_save(filename, type, map)
+    stores the given map into the file given by filename. If the filename is
+    not prefixed by '!' the file will not be overwritten and an error
+    will be thrown. Type indicates the storage format (either single or double
+    precision).
+
+  SEE ALSO: healpix_map_init, healpix_map_load
+*/
+
 extern healpix_map_get_pixel;
 /* DOCUMENT healpix_map_get_pixel(map, pixel)
      returns the value of the given pixel of a healpix map object.
@@ -51,6 +61,8 @@ extern healpix_map_get_map;
    SEE ALSO: healpix_map_init, healpix_map_load, healpix_map_get_pixel,
              healpix_map_get_direction, healpix_map_put_direction
  */
+
+extern healpix_map_put_map;
 
 extern healpix_map_get_direction_internal;
 
