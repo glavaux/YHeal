@@ -179,6 +179,40 @@ void Y_healpix_alm_map2alm(int argc)
 }
 
 
+template<typename T>
+static void doTransform1bis(Healpix_Map<T>& m, Alm<xcomplex<T> >& alm, int iter)
+{
+  arr<double> wgt(2*m.Nside());
+  wgt.fill(1);
+
+  map2alm_iter(m, alm, iter, wgt);
+}
+
+extern "C"
+void Y_healpix_alm_map2alm_iter(int argc)
+{
+  y_check_arguments(argc, 3);
+
+  YorickAlm *alm = yget_alm(argc-1);
+  YorickHealpix *px = yget_healpix(argc-2);
+  int iter = ygets_i(argc-3);
+
+  if (alm->type != px->type)
+    y_error("Alm type is not compatible with Map type");
+
+  switch (px->type)
+    {
+    case Y_FLOAT:
+      doTransform1bis(*px->map_float, *alm->alm_float, iter);
+      break;
+    case Y_DOUBLE:
+      doTransform1bis(*px->map_double, *alm->alm_double, iter);
+      break;
+    default:
+      y_error("internal error");
+    }  
+}
+
 
 template<typename T>
 static void doTransform2(Healpix_Map<T>& m, Alm<xcomplex<T> >& alm)
@@ -316,7 +350,7 @@ static void loadAlmArray(Alm<xcomplex<T> >& alms, double *in, long ntot)
 }
 
 extern "C"
-void Y_healpix_alm_put_alms(int argc)
+void Y_healpix_alm_put_alms1(int argc)
 {
   y_check_arguments(argc, 2);
 
@@ -347,6 +381,51 @@ void Y_healpix_alm_put_alms(int argc)
 
   ypush_nil();
 }
+
+template<typename T>
+static void loadAlmWithList(Alm<xcomplex<T> >& alms, double *in,
+                            int *llist, int *mlist, long ntot)
+{
+  for (long i = 0; i < ntot; i++)
+    {
+      alms(llist[i], mlist[i]).re = in[2*i + 0];
+      alms(llist[i], mlist[i]).im = in[2*i + 1];
+    }
+}
+
+
+
+extern "C"
+void Y_healpix_alm_put_alms2(int argc)
+{
+  y_check_arguments(argc, 4);
+
+  YorickAlm *alm = yget_alm(argc-1);
+  long ntotl, ntotm;
+
+  int *llist = ygeta_i(argc-3, &ntotl, 0);
+  int *mlist = ygeta_i(argc-4, &ntotm, 0);
+
+  if (ntotl != ntotm)
+    {
+      y_error("Internal error: argument 2 and 3 should have the same number of elements");
+      return;
+    }
+
+  long dims[2];
+  long ntot;
+  double *in_alm = ygeta_z(argc-2, &ntot, dims);
+  switch (alm->type)
+    {
+    case Y_FLOAT:
+      loadAlmWithList(*alm->alm_float, in_alm, llist, mlist, ntotl);
+      break;
+    case Y_DOUBLE:
+      loadAlmWithList(*alm->alm_double, in_alm, llist, mlist, ntotl);
+      break;
+    }
+}
+
 
 extern "C"
 void Y_healpix_alm_get_lmmax(int argc)
@@ -412,4 +491,44 @@ void Y_healpix_alm_scaleL(int argc)
   }
 
   
+}
+
+
+template<typename T>
+static void doTransform3(Healpix_Map<T>& m, Healpix_Map<T>& mtheta, Healpix_Map<T>& mphi, Alm<xcomplex<T> >& alm)
+{
+  if (m.Npix() != mphi.Npix() || m.Npix() != mtheta.Npix()) {
+    y_error("All maps must have the same resolution");
+    return;
+  }
+  alm2map_der1(alm, m, mtheta, mphi);
+}
+
+extern "C"
+void Y_healpix_alm_alm2mapder(int argc)
+{
+  y_check_arguments(argc, 4);
+
+  YorickAlm *alm = yget_alm(argc-1);
+  YorickHealpix *px = yget_healpix(argc-2);
+  YorickHealpix *pxt = yget_healpix(argc-3);
+  YorickHealpix *pxp = yget_healpix(argc-4);
+
+  if (alm->type != px->type)
+    y_error("Alm type is not compatible with Map type");
+  if (px->type != pxt->type || px->type != pxp->type)
+    y_error("All maps must have the same type");
+
+  switch (px->type)
+    {
+    case Y_FLOAT:
+      doTransform3(*px->map_float, *pxt->map_float, *pxp->map_float, *alm->alm_float);
+      break;
+    case Y_DOUBLE:
+      doTransform3(*px->map_double, *pxt->map_double, *pxp->map_double, *alm->alm_double);
+      break;
+    default:
+      y_error("internal error");
+    }
+  ypush_nil();
 }

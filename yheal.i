@@ -117,7 +117,7 @@ extern healpix_alm_map2alm;
      and store the result in "alm".
 
    SEE ALSO: healpix_alm_init, healpix_alm_alm2map, healpix_alm_get_alms,
-             healpix_alm_put_alms, healpix_map_init
+             healpix_alm_put_alms, healpix_map_init, healpix_alm_map2alm_iter
  */
 
 extern healpix_alm_alm2map;
@@ -128,6 +128,25 @@ extern healpix_alm_alm2map;
      
    SEE ALSO: healpix_map_init, healpix_alm_alm2map, healpix_alm_get_alms,
              healpix_alm_put_alms
+ */
+
+extern healpix_alm_alm2mapder;
+/* DOCUMENT healpix_alm_alm2mapder, alm, map, map_theta, map_phi
+     This subroutine transforms the alm representation into a healpix map, including its derivatives.
+     The map should have been previously allocated using healpix_map_init
+     or healpix_map_load.
+     
+   SEE ALSO: healpix_map_init, healpix_alm_alm2map, healpix_alm_get_alms,
+             healpix_alm_put_alms
+ */
+
+extern healpix_alm_map2alm_iter;
+/* DOCUMENT healpix_alm_map2alm_iter, alm, map, iter
+     This subroutine does a spherical harmonic transform of the given "map"
+     and store the result in "alm".
+     This is the iterated variant of the transform for better precision.
+
+   SEE ALSO: healpix_alm_alm2map_iter
  */
 
 extern healpix_alm_get_alms1;
@@ -161,13 +180,38 @@ func healpix_alm_get_alms(alm,llist,mlist)
   return healpix_alm_get_alms2(alm,llist,mlist);
 }
 
-extern healpix_alm_put_alms;
-/* DOCUMENT healpix_alm_put_alms, alm, array
-     This sets the internal alm of the given "alm" object to the value
-     sets in "array". The ordering of the array must follow healpix ordering.
+extern healpix_alm_put_alms1;
+extern healpix_alm_put_alms2;
+
+func healpix_alm_put_alms(alm,data,llist,mlist)
+{
+/* DOCUMENT healpix_alm_put_alms,alm,data[,llist,mlist]
+     sets the complex array of the alms contained the "alm" object. This
+     array is a copy of the internal data. Any modifications to "alm" must
+     be done using healpix_alm_put_alms. The ordering follows healpix alm
+     ordering.
+     Optionally, one may give a list of Ls and Ms in  llist and mlist.
+     In that case the returned array will contain the alms ordered in
+     exactly the list specify it, with the same dimensions. llist and mlist
+     must have the same dimensions.
      
    SEE ALSO: healpix_alm_init, healpix_alm_get_alms
  */
+  if (llist == [] && mlist == []) {
+    healpix_alm_put_alms1,alm,data;
+    return;
+  }
+ 
+  if (dimsof(llist)(1) != dimsof(mlist)(1))
+    error,"Rank does not match for (l,m)s";
+
+  if (allof(dimsof(llist) != dimsof(mlist)))
+    error,"Dimensions of the (l,m)s must be the same";
+
+  if (anyof(llist < mlist) || anyof(-llist > mlist))
+    error,"-l <= m <= l for all elements of llist and mlist";
+  healpix_alm_put_alms2,alm,data,llist,mlist;
+}
 
 extern healpix_alm_get_lmmax;
 /* DOCUMENT [lmax,mmax]=healpix_alm_get_lmmax(alm)
