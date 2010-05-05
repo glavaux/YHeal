@@ -130,16 +130,6 @@ extern healpix_alm_alm2map;
              healpix_alm_put_alms
  */
 
-extern healpix_alm_alm2mapder;
-/* DOCUMENT healpix_alm_alm2mapder, alm, map, map_theta, map_phi
-     This subroutine transforms the alm representation into a healpix map, including its derivatives.
-     The map should have been previously allocated using healpix_map_init
-     or healpix_map_load.
-     
-   SEE ALSO: healpix_map_init, healpix_alm_alm2map, healpix_alm_get_alms,
-             healpix_alm_put_alms
- */
-
 extern healpix_alm_map2alm_iter;
 /* DOCUMENT healpix_alm_map2alm_iter, alm, map, iter
      This subroutine does a spherical harmonic transform of the given "map"
@@ -197,11 +187,9 @@ func healpix_alm_put_alms(alm,data,llist,mlist)
      
    SEE ALSO: healpix_alm_init, healpix_alm_get_alms
  */
-  if (llist == [] && mlist == []) {
+  if (llist == [] && mlist == [])
     healpix_alm_put_alms1,alm,data;
-    return;
-  }
- 
+
   if (dimsof(llist)(1) != dimsof(mlist)(1))
     error,"Rank does not match for (l,m)s";
 
