@@ -111,6 +111,12 @@ extern healpix_alm_load;
   SEE ALSO: healpix_alm_init
  */
 
+extern healpix_alm_save;
+/* DOCUMENT healpix_alm_save(alm, filename)
+
+   SEE ALSO: healpix_alm_load
+ */
+
 extern healpix_alm_map2alm;
 /* DOCUMENT healpix_alm_map2alm, alm, map
      This subroutine does a spherical harmonic transform of the given "map"
@@ -187,8 +193,10 @@ func healpix_alm_put_alms(alm,data,llist,mlist)
      
    SEE ALSO: healpix_alm_init, healpix_alm_get_alms
  */
-  if (llist == [] && mlist == [])
+  if (llist == [] && mlist == []) {
     healpix_alm_put_alms1,alm,data;
+    return;
+  }
 
   if (dimsof(llist)(1) != dimsof(mlist)(1))
     error,"Rank does not match for (l,m)s";

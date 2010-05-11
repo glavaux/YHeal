@@ -17,6 +17,7 @@
 #include <alm_fitsio.h>
 #include <alm_healpix_tools.h>
 #include <xcomplex.h>
+#include <fitshandle.h>
 #define typeid ctypeid
 #include <yapi.h>
 #undef typeid
@@ -125,8 +126,8 @@ void Y_healpix_alm_load(int argc)
   y_check_arguments(argc, 2);
 
   YorickAlm *alm = ypush_alm();
-  int type = ygets_i(argc-1);
-  ystring_t s = ygets_q(argc);
+  int type = ygets_i(argc-2);
+  ystring_t s = ygets_q(argc-1);
 
   switch (type) {
   case HEALPIX_FLOAT:   
@@ -142,6 +143,40 @@ void Y_healpix_alm_load(int argc)
     return;
     break;
   }
+}
+
+template<typename T>
+void saveHealpixAlm(const std::string& fname, Alm<xcomplex<T> > *alms)
+{
+  fitshandle f;
+
+  try
+    {
+      f.create(fname.c_str());
+    }
+  catch (const Message_error& e)
+    {
+      y_error(e.what());
+    }
+  write_Alm_to_fits(f, *alms, alms->Lmax(), alms->Mmax(), FITSUTIL<T>::DTYPE);
+}
+
+extern "C"
+void Y_healpix_alm_save(int argc)
+{
+  y_check_arguments(argc, 2);
+  ystring_t s = ygets_q(argc-1);
+  YorickAlm *alm = yget_alm(argc-2);
+
+  switch (alm->type) {
+  case Y_FLOAT:
+    saveHealpixAlm<float>(std::string(s), alm->alm_float);
+    break;
+  case Y_DOUBLE:
+    saveHealpixAlm<double>(std::string(s), alm->alm_double);
+    break;
+  }
+  ypush_nil();
 }
 
 
