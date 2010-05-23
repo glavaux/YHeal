@@ -125,9 +125,9 @@ void Y_healpix_alm_load(int argc)
 {
   y_check_arguments(argc, 2);
 
-  YorickAlm *alm = ypush_alm();
   int type = ygets_i(argc-2);
   ystring_t s = ygets_q(argc-1);
+  YorickAlm *alm = ypush_alm();
 
   switch (type) {
   case HEALPIX_FLOAT:   
