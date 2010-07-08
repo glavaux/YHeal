@@ -107,10 +107,20 @@ void Y_healpix_map_load(int argc)
       return;
     }
 
-  y_check_arguments(argc, 2);
+  if (argc < 2 || argc > 3)
+    {
+      y_error("invalid number of arguments");
+      return;
+    }
+
+
+  int hdunum = 1;
+  if (argc == 3)
+    hdunum = ygets_i(argc-3);
 
   YorickHealpix *px = ypush_healpix();
   argc++;
+
 
   ystring_t fname = ygets_q(argc-1);
   int type = ygets_i(argc-2);
@@ -121,7 +131,7 @@ void Y_healpix_map_load(int argc)
       px->map_float = new Healpix_Map<float>();
       try
 	{
-	  read_Healpix_map_from_fits(std::string(fname), *px->map_float);
+	  read_Healpix_map_from_fits(std::string(fname), *px->map_float, hdunum);
 	}
       catch (const Message_error& e)
 	{
@@ -134,7 +144,7 @@ void Y_healpix_map_load(int argc)
       px->map_double = new Healpix_Map<double>();
       try
 	{
-	  read_Healpix_map_from_fits(std::string(fname), *px->map_double);
+	  read_Healpix_map_from_fits(std::string(fname), *px->map_double, hdunum);
 	}
       catch (const Message_error& e)
 	{

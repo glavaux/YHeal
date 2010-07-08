@@ -25,7 +25,7 @@ extern healpix_map_init;
  */
 
 extern healpix_map_load;
-/* DOCUMENT healpix_map_load(filename, Type)
+/* DOCUMENT healpix_map_load(filename, Type[, hdunum])
     returns a newly built healpix map object with data obtained from
     the given FITS file, with an internal type representation given by
     Type (either HEALPIX_FLOAT or HEALPIX_DOUBLE).
