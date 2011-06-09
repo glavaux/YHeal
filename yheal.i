@@ -25,7 +25,7 @@ extern healpix_map_init;
  */
 
 extern healpix_map_load;
-/* DOCUMENT healpix_map_load(filename, Type)
+/* DOCUMENT healpix_map_load(filename, Type[, hdunum])
     returns a newly built healpix map object with data obtained from
     the given FITS file, with an internal type representation given by
     Type (either HEALPIX_FLOAT or HEALPIX_DOUBLE).
@@ -111,6 +111,12 @@ extern healpix_alm_load;
   SEE ALSO: healpix_alm_init
  */
 
+extern healpix_alm_save;
+/* DOCUMENT healpix_alm_save(alm, filename)
+
+   SEE ALSO: healpix_alm_load
+ */
+
 extern healpix_alm_map2alm;
 /* DOCUMENT healpix_alm_map2alm, alm, map
      This subroutine does a spherical harmonic transform of the given "map"
@@ -123,16 +129,6 @@ extern healpix_alm_map2alm;
 extern healpix_alm_alm2map;
 /* DOCUMENT healpix_alm_alm2map, alm, map
      This subroutine transforms the alm representation into a healpix map.
-     The map should have been previously allocated using healpix_map_init
-     or healpix_map_load.
-     
-   SEE ALSO: healpix_map_init, healpix_alm_alm2map, healpix_alm_get_alms,
-             healpix_alm_put_alms
- */
-
-extern healpix_alm_alm2mapder;
-/* DOCUMENT healpix_alm_alm2mapder, alm, map, map_theta, map_phi
-     This subroutine transforms the alm representation into a healpix map, including its derivatives.
      The map should have been previously allocated using healpix_map_init
      or healpix_map_load.
      
@@ -201,7 +197,7 @@ func healpix_alm_put_alms(alm,data,llist,mlist)
     healpix_alm_put_alms1,alm,data;
     return;
   }
- 
+
   if (dimsof(llist)(1) != dimsof(mlist)(1))
     error,"Rank does not match for (l,m)s";
 

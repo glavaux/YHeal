@@ -17,6 +17,7 @@
 #include <alm_fitsio.h>
 #include <alm_healpix_tools.h>
 #include <xcomplex.h>
+#include <fitshandle.h>
 #define typeid ctypeid
 #include <yapi.h>
 #undef typeid
@@ -124,9 +125,9 @@ void Y_healpix_alm_load(int argc)
 {
   y_check_arguments(argc, 2);
 
+  int type = ygets_i(argc-2);
+  ystring_t s = ygets_q(argc-1);
   YorickAlm *alm = ypush_alm();
-  int type = ygets_i(argc-1);
-  ystring_t s = ygets_q(argc);
 
   switch (type) {
   case HEALPIX_FLOAT:   
@@ -142,6 +143,40 @@ void Y_healpix_alm_load(int argc)
     return;
     break;
   }
+}
+
+template<typename T>
+void saveHealpixAlm(const std::string& fname, Alm<xcomplex<T> > *alms)
+{
+  fitshandle f;
+
+  try
+    {
+      f.create(fname.c_str());
+    }
+  catch (const Message_error& e)
+    {
+      y_error(e.what());
+    }
+  write_Alm_to_fits(f, *alms, alms->Lmax(), alms->Mmax(), FITSUTIL<T>::DTYPE);
+}
+
+extern "C"
+void Y_healpix_alm_save(int argc)
+{
+  y_check_arguments(argc, 2);
+  ystring_t s = ygets_q(argc-1);
+  YorickAlm *alm = yget_alm(argc-2);
+
+  switch (alm->type) {
+  case Y_FLOAT:
+    saveHealpixAlm<float>(std::string(s), alm->alm_float);
+    break;
+  case Y_DOUBLE:
+    saveHealpixAlm<double>(std::string(s), alm->alm_double);
+    break;
+  }
+  ypush_nil();
 }
 
 
@@ -491,44 +526,4 @@ void Y_healpix_alm_scaleL(int argc)
   }
 
   
-}
-
-
-template<typename T>
-static void doTransform3(Healpix_Map<T>& m, Healpix_Map<T>& mtheta, Healpix_Map<T>& mphi, Alm<xcomplex<T> >& alm)
-{
-  if (m.Npix() != mphi.Npix() || m.Npix() != mtheta.Npix()) {
-    y_error("All maps must have the same resolution");
-    return;
-  }
-  alm2map_der1(alm, m, mtheta, mphi);
-}
-
-extern "C"
-void Y_healpix_alm_alm2mapder(int argc)
-{
-  y_check_arguments(argc, 4);
-
-  YorickAlm *alm = yget_alm(argc-1);
-  YorickHealpix *px = yget_healpix(argc-2);
-  YorickHealpix *pxt = yget_healpix(argc-3);
-  YorickHealpix *pxp = yget_healpix(argc-4);
-
-  if (alm->type != px->type)
-    y_error("Alm type is not compatible with Map type");
-  if (px->type != pxt->type || px->type != pxp->type)
-    y_error("All maps must have the same type");
-
-  switch (px->type)
-    {
-    case Y_FLOAT:
-      doTransform3(*px->map_float, *pxt->map_float, *pxp->map_float, *alm->alm_float);
-      break;
-    case Y_DOUBLE:
-      doTransform3(*px->map_double, *pxt->map_double, *pxp->map_double, *alm->alm_double);
-      break;
-    default:
-      y_error("internal error");
-    }
-  ypush_nil();
 }

@@ -13,9 +13,9 @@ extern BuiltIn Y_healpix_map_get_direction_internal;
 extern BuiltIn Y_healpix_map_put_direction;
 extern BuiltIn Y_healpix_alm_init;
 extern BuiltIn Y_healpix_alm_load;
+extern BuiltIn Y_healpix_alm_save;
 extern BuiltIn Y_healpix_alm_map2alm;
 extern BuiltIn Y_healpix_alm_alm2map;
-extern BuiltIn Y_healpix_alm_alm2mapder;
 extern BuiltIn Y_healpix_alm_map2alm_iter;
 extern BuiltIn Y_healpix_alm_get_alms1;
 extern BuiltIn Y_healpix_alm_get_alms2;
@@ -46,9 +46,9 @@ static BuiltIn *y0_routines[] = {
   &Y_healpix_map_put_direction,
   &Y_healpix_alm_init,
   &Y_healpix_alm_load,
+  &Y_healpix_alm_save,
   &Y_healpix_alm_map2alm,
   &Y_healpix_alm_alm2map,
-  &Y_healpix_alm_alm2mapder,
   &Y_healpix_alm_map2alm_iter,
   &Y_healpix_alm_get_alms1,
   &Y_healpix_alm_get_alms2,
@@ -75,9 +75,9 @@ static char *y0_names[] = {
   "healpix_map_put_direction",
   "healpix_alm_init",
   "healpix_alm_load",
+  "healpix_alm_save",
   "healpix_alm_map2alm",
   "healpix_alm_alm2map",
-  "healpix_alm_alm2mapder",
   "healpix_alm_map2alm_iter",
   "healpix_alm_get_alms1",
   "healpix_alm_get_alms2",
