@@ -19,7 +19,7 @@ TGT=$(DEFAULT_TGT)
 PKG_NAME=yheal
 PKG_I=yheal.i
 
-OBJS=yheal.o yalm.o
+OBJS=yheal.o yalm.o ypowspec.o
 
 # change to give the executable a name other than yorick
 PKG_EXENAME=yorick

@@ -230,6 +230,11 @@ extern healpix_alm_scaleL;
    SEE ALSO: healpix_alm_get_lmmax
  */
 
+extern healpix_powspec_load;
+/* DOCUMENT healpix_powspec_load(filename)
+     loads the angular powerspectrum stored in a fits file
+ */
+
 func healpix_smooth_with_Gaussian(alm, radius)
 {
   sigma2fwhm=2.3548200450309493; // sqrt(8*log(2.))

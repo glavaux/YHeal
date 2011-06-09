@@ -23,6 +23,7 @@ extern BuiltIn Y_healpix_alm_put_alms1;
 extern BuiltIn Y_healpix_alm_put_alms2;
 extern BuiltIn Y_healpix_alm_get_lmmax;
 extern BuiltIn Y_healpix_alm_scaleL;
+extern BuiltIn Y_healpix_powspec_load;
 
 /*----------------list include files */
 
@@ -55,6 +56,7 @@ static BuiltIn *y0_routines[] = {
   &Y_healpix_alm_put_alms2,
   &Y_healpix_alm_get_lmmax,
   &Y_healpix_alm_scaleL,
+  &Y_healpix_powspec_load,
   0
 };
 
@@ -83,6 +85,7 @@ static char *y0_names[] = {
   "healpix_alm_put_alms2",
   "healpix_alm_get_lmmax",
   "healpix_alm_scaleL",
+  "healpix_powspec_load",
   0
 };
 
