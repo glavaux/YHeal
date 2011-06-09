@@ -9,3 +9,10 @@ make
 
 To install:
 make install
+
+
+
+Copyright notice:
+Copyright(c) 2008-2011 Guilhem Lavaux <guilhem.lavaux@gmail.com>
+
+This package is under the GPL license version 2.0. 
