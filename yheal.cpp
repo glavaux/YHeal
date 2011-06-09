@@ -133,7 +133,7 @@ void Y_healpix_map_load(int argc)
 	{
 	  read_Healpix_map_from_fits(std::string(fname), *px->map_float, hdunum);
 	}
-      catch (const Message_error& e)
+      catch (const PlanckError& e)
 	{
 	  y_error("Invalid FITS file");
 	  return;
@@ -146,7 +146,7 @@ void Y_healpix_map_load(int argc)
 	{
 	  read_Healpix_map_from_fits(std::string(fname), *px->map_double, hdunum);
 	}
-      catch (const Message_error& e)
+      catch (const PlanckError& e)
 	{
 	  y_error("Invalid FITS file");
 	  return;
@@ -171,13 +171,13 @@ void reallyStoreMap(const string& fname, Healpix_Map<T2>* map)
     {
       f.create(fname);
     }
-  catch (const Message_error& e)
+  catch (const PlanckError& e)
     {
       y_error("Could not create file (already present or disk full)");
       return;
     }
   
-  write_Healpix_map_to_fits(f, *map, FITSUTIL<T>::DTYPE);
+  write_Healpix_map_to_fits(f, *map, planckType<T>());
 }
 
 template<typename T>

@@ -111,7 +111,7 @@ Alm<xcomplex<T> > *loadAlm(const std::string& fname)
     alms = new Alm<xcomplex<T> >(lmax, mmax);
 
     read_Alm_from_fits(fname, *alms, lmax, mmax);
-  } catch (const Message_error& e) {
+  } catch (const PlanckError& e) {
     y_error("unable to open file");
     return 0;
   }
@@ -154,11 +154,11 @@ void saveHealpixAlm(const std::string& fname, Alm<xcomplex<T> > *alms)
     {
       f.create(fname.c_str());
     }
-  catch (const Message_error& e)
+  catch (const PlanckError& e)
     {
       y_error(e.what());
     }
-  write_Alm_to_fits(f, *alms, alms->Lmax(), alms->Mmax(), FITSUTIL<T>::DTYPE);
+  write_Alm_to_fits(f, *alms, alms->Lmax(), alms->Mmax(), planckType<T>());
 }
 
 extern "C"
